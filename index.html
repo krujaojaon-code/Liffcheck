@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบเช็คอินสะสมแต้ม</title>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center h-screen">
+
+  <div class="bg-white p-8 rounded-2xl shadow-xl w-80 text-center">
+    <img id="user-pic" class="w-20 h-20 rounded-full mx-auto mb-4 object-cover border" src="" alt="Profile">
+    <h2 id="user-name" class="text-xl font-bold mb-2">กำลังโหลด...</h2>
+
+    <div id="round-badge" class="bg-green-100 text-green-700 text-sm font-semibold py-1 px-3 rounded-full inline-block mb-4">
+      สะสมครบแล้ว: 0 รอบ
+    </div>
+
+    <p class="text-gray-500 text-sm mb-1">จำนวนเช็คอินรอบปัจจุบัน</p>
+    <h1 id="count-display" class="text-5xl font-bold text-green-600 mb-6">0 / 10</h1>
+
+    <button onclick="doCheckIn()" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl transition duration-200 shadow-md">
+      📍 กดเช็คอิน
+    </button>
+  </div>
+
+  <script>
+    const LIFF_ID = "2011831668-svA4ZJ08"; 
+    const BACKEND_URL = "https://script.google.com/macros/s/AKfycbzlhEam2OoUzzSHieG0SEC8oCkR__nOsmdm_s03qjMcCoCmOxM8iDLNeB1ddf3tvDAWYA/exec";
+
+    let userId = "";
+
+    async function initializeLiff() {
+      try {
+        await liff.init({ liffId: LIFF_ID });
+        if (!liff.isLoggedIn()) {
+          liff.login();
+        } else {
+          const profile = await liff.getProfile();
+          userId = profile.userId;
+          document.getElementById("user-name").innerText = profile.displayName;
+          document.getElementById("user-pic").src = profile.pictureUrl;
+        }
+      } catch (error) {
+        console.error("LIFF Initialization failed", error);
+      }
+    }
+
+    async function doCheckIn() {
+      if (!userId) return alert("ยังไม่พร้อมใช้งาน กรุณาลองใหม่อีกครั้ง");
+
+      try {
+        let response = await fetch(BACKEND_URL, {
+          method: "POST",
+          body: JSON.stringify({ userId: userId })
+        });
+        let result = await response.json();
+
+        if (result.status === "success") {
+          document.getElementById("count-display").innerText = result.currentCount + " / 10";
+          document.getElementById("round-badge").innerText = "สะสมครบแล้ว: " + result.totalRounds + " รอบ";
+          alert("เช็คอินสำเร็จ!");
+        }
+      } catch (err) {
+        alert("เกิดข้อผิดพลาดในการเช็คอิน");
+      }
+    }
+
+    initializeLiff();
+  </script>
+</body>
+</html>
